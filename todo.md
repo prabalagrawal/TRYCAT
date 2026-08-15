@@ -38,6 +38,7 @@
 - [x] Validate the current Express/tRPC entry point against Vercel’s Express deployment contract and prepare only the required provider configuration or adapter changes.
 - [x] Create a Vercel production release checklist for sensitive environment variables, dedicated database credentials, preview validation, headers, logging, and rollback evidence; do not deploy or expose credentials.
 - [x] Add an explicit Vercel rollback and release-recovery procedure with owner, trigger conditions, retained evidence, and post-rollback verification steps.
+- [x] Align the Vercel static-output configuration with Vercel’s documented Express behavior so CDN-served assets do not rely on ignored Express static middleware.
 
 # TRYCAT Originality and Motion Review
 

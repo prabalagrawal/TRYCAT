@@ -21,10 +21,12 @@ describe("Vercel Express adapter", () => {
   it("routes Vercel requests through the secured Express function with production assets included", () => {
     const configPath = path.resolve(import.meta.dirname, "..", "vercel.json");
     const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as {
+      buildCommand?: string;
       functions?: Record<string, { includeFiles?: string }>;
       rewrites?: Array<{ source: string; destination: string }>;
     };
 
+    expect(config.buildCommand).toBe("pnpm run vercel-build");
     expect(config.functions?.["server.ts"]?.includeFiles).toBe("dist/public/**");
     expect(config.rewrites).toEqual([{ source: "/(.*)", destination: "/server" }]);
   });
