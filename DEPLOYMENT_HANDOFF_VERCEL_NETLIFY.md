@@ -31,8 +31,8 @@ Vercel documents Express support, but an Express app is deployed as a single Ver
 
 | Area | Required action before a Vercel production deployment | Evidence to retain |
 | --- | --- | --- |
-| Runtime adapter | Validate the current Express entry point against Vercel’s supported Express entry/export model in a preview deployment. Do not assume the current long-running local server bootstrap is deployment-ready without the preview test. | Preview URL, build log, route smoke-test results for `/`, `/contact`, `/rights`, `/api/trpc/*`, and the storage asset path. |
-| Static assets | Confirm all static files are served by the configured Vercel public/CDN path rather than relying on `express.static()`. | Route/asset probe and configuration review. |
+| Runtime adapter | A root-level `server.ts` now exports the configured Express app without opening a listener, and `vercel.json` routes requests through that secured function. Validate the bundle in a Vercel Preview deployment before production. | Preview URL, build log, route smoke-test results for `/`, `/contact`, `/rights`, `/api/trpc/*`, and the storage asset path. |
+| Static assets | The Vercel function bundle includes `dist/public/**` and the Express app uses the production static-serving path. Confirm assets and SPA fallback routes are served through the configured function without bypassing application security middleware. | Route/asset probe and configuration review. |
 | Production secrets | Add runtime secrets only in the Vercel project/team environment configuration; use Vercel’s sensitive-variable protection for production and preview where available.[2] | Environment-key inventory (not values), environment scope, access-role list, and rotation owner. |
 | Database | Set only the dedicated `trycat_app` connection for production runtime. Test TLS, allowed network access, and a contact/rights form without retaining test personal data. | Schema-grant record, TLS evidence, and redacted connection validation result. |
 | Headers and proxy | Re-test HTTP→HTTPS, HSTS, CSP, origin checks, request limit, 413, and 429 responses from the Vercel deployment domain. Confirm forwarded headers cannot be supplied by a public client to alter client-IP/rate-limit identity. | Header/method/body probe output and platform/proxy configuration evidence. |
@@ -72,6 +72,19 @@ Before declaring either host production-ready, execute the following against the
 ## Explicit Non-Claims
 
 Until the selected host supplies environment-specific evidence, TRYCAT must not claim that encryption at rest, encrypted backups, key management, least privilege, trusted proxy handling, central logging, or security alerting has been verified. The application-level controls have been tested; the platform controls remain a separate release record.
+
+## Vercel Rollback and Release Recovery
+
+| Item | Required procedure |
+| --- | --- |
+| Release owner | Name one accountable deployment owner and one backup owner before promoting a Vercel Preview to Production. Record the target production deployment ID, commit hash, migration version, database identity review, environment-variable scope review, and acceptance-test results. |
+| Rollback triggers | Roll back immediately for a confirmed security-control regression; unexpected 4xx/5xx increase; failed contact/rights persistence; broken proof verification, rate limiting, consent gate, or headers; client-secret exposure; database access failure; or material visual/functionality regression. |
+| Rollback action | Use Vercel’s deployment rollback/promotion workflow to restore the last known-good production deployment. Do not roll back a database schema by deletion or destructive alteration. If a migration is incompatible, stop promotion and use a separately reviewed forward-fix or restore procedure approved by the database owner. |
+| Evidence to retain | Preserve the incident timestamp, affected deployment ID/commit, observed symptoms, rollback operator, restored deployment ID/commit, relevant redacted logs, and a decision record explaining whether secrets or database credentials require rotation. |
+| Post-rollback verification | Re-run the production-domain acceptance test: HTTPS redirect, HSTS/CSP/security headers, `/api/trpc` method handling, 413 body limit, origin guard, proof-ready/invalid-proof behavior, rate-limit response, no pre-consent analytics, and no client-secret exposure. Confirm contact/rights records remain available and no data migration was lost. |
+| Follow-up | Create a corrective branch from the failed deployment commit, reproduce in Vercel Preview, obtain reviewer approval, and attach the new acceptance-test evidence before another production promotion. |
+
+> **Safety constraint:** Vercel rollback restores application code/configuration; it does not automatically reverse database changes. Database rollback, restore, or credential rotation remains a controlled operation owned by the database/platform administrator.
 
 ## References
 

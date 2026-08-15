@@ -35,6 +35,9 @@
 - [x] Add Vercel, Netlify, and built-in-hosting handoff guidance that identifies the responsible platform/owner and the evidence required before a production security claim.
 - [x] Create a credential-safe Vercel/Netlify deployment handoff for a dedicated least-privilege application database account and separate migration account; do not expose or change live connection values.
 - [x] Document Vercel and Netlify compatibility checks for the Express/tRPC full-stack runtime, server-side secrets, database reachability, public form proof verification, and headers before deployment.
+- [x] Validate the current Express/tRPC entry point against Vercel’s Express deployment contract and prepare only the required provider configuration or adapter changes.
+- [x] Create a Vercel production release checklist for sensitive environment variables, dedicated database credentials, preview validation, headers, logging, and rollback evidence; do not deploy or expose credentials.
+- [x] Add an explicit Vercel rollback and release-recovery procedure with owner, trigger conditions, retained evidence, and post-rollback verification steps.
 
 # TRYCAT Originality and Motion Review
 

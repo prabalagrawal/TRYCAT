@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import path from "path";
+import { fileURLToPath } from "url";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
@@ -69,9 +71,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
-async function startServer() {
-  const app = express();
-  const server = createServer(app);
+async function configureApp(app: express.Express, server?: ReturnType<typeof createServer>) {
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
   app.use(requireHttpsInProduction);
@@ -102,6 +102,7 @@ async function startServer() {
   );
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
+    if (!server) throw new Error("A Node HTTP server is required for Vite development middleware.");
     await setupVite(app, server);
   } else {
     serveStatic(app);
@@ -113,6 +114,22 @@ async function startServer() {
     console.warn(JSON.stringify({ event: "request_rejected", status, kind: error.type ?? "unknown", timestamp: new Date().toISOString() }));
     res.status(status).json({ error: status === 413 ? "Request payload too large." : "Something went wrong. Please try again." });
   });
+}
+
+/**
+ * Creates the production Express application without opening a listener.
+ * Vercel imports this through the root-level server.ts function entry.
+ */
+export async function createApp() {
+  const app = express();
+  await configureApp(app);
+  return app;
+}
+
+async function startServer() {
+  const app = express();
+  const server = createServer(app);
+  await configureApp(app, server);
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
@@ -126,4 +143,5 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+const invokedAsEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedAsEntrypoint) startServer().catch(console.error);
