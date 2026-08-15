@@ -39,6 +39,7 @@
 - [x] Create a Vercel production release checklist for sensitive environment variables, dedicated database credentials, preview validation, headers, logging, and rollback evidence; do not deploy or expose credentials.
 - [x] Add an explicit Vercel rollback and release-recovery procedure with owner, trigger conditions, retained evidence, and post-rollback verification steps.
 - [x] Align the Vercel static-output configuration with Vercel’s documented Express behavior so CDN-served assets do not rely on ignored Express static middleware.
+- [ ] Verify the user-created GitHub repository, prepare a credential-safe commit, and publish the current local `compliance/dpdp` branch only after final confirmation.
 
 # TRYCAT Originality and Motion Review
 
