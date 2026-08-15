@@ -1,13 +1,18 @@
-import { createHmac } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import { TRPCError } from "@trpc/server";
-import { consumeSharedRateLimit } from "./db";
+import { consumeBotChallenge, consumeSharedRateLimit, createBotChallenge, getBotChallenge } from "./db";
 import { ENV } from "./_core/env";
 import type { TrpcContext } from "./_core/context";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const SENSITIVE_ATTEMPT_LIMIT = 5;
+const BOT_CHALLENGE_TTL_MS = 5 * 60 * 1000;
+const BOT_CHALLENGE_DIFFICULTY = 3;
 export const RATE_LIMIT_MESSAGE = "Too many attempts. Please wait a few minutes and try again.";
+export const BOT_CHALLENGE_MESSAGE = "We could not verify this request. Please refresh the form and try again.";
+
+export type BotProof = { challengeId: string; nonce: string; solution: string };
 
 type RateLimitResult = { allowed: boolean; remaining: number; retryAfterSeconds: number };
 
@@ -23,6 +28,43 @@ function limiterSecret() {
 
 function hashRateLimitKey(scope: string, identifier: string) {
   return createHmac("sha256", limiterSecret()).update(`${scope}:${identifier}`).digest("hex");
+}
+
+function hashChallengeNonce(nonce: string) {
+  return createHmac("sha256", limiterSecret()).update(`bot-challenge:${nonce}`).digest("hex");
+}
+
+function matchesNonce(expectedHash: string, nonce: string) {
+  const actualHash = hashChallengeNonce(nonce);
+  return timingSafeEqual(Buffer.from(expectedHash, "hex"), Buffer.from(actualHash, "hex"));
+}
+
+export function validProof(challengeId: string, nonce: string, solution: string, difficulty = BOT_CHALLENGE_DIFFICULTY) {
+  if (!/^[a-zA-Z0-9_-]{12,64}$/.test(challengeId) || !/^[a-zA-Z0-9_-]{16,96}$/.test(nonce) || !/^\d{1,9}$/.test(solution)) return false;
+  return createHash("sha256").update(`${challengeId}:${nonce}:${solution}`).digest("hex").startsWith("0".repeat(difficulty));
+}
+
+export async function issueBotChallenge(ctx: TrpcContext, subjectId: string) {
+  await enforceSensitiveRateLimit(ctx, "botChallenge.issue", subjectId);
+  const challengeId = randomBytes(18).toString("base64url");
+  const nonce = randomBytes(24).toString("base64url");
+  const expiresAt = new Date(Date.now() + BOT_CHALLENGE_TTL_MS);
+  await createBotChallenge({ challengeId, nonceHash: hashChallengeNonce(nonce), difficulty: BOT_CHALLENGE_DIFFICULTY, expiresAt });
+  return { challengeId, nonce, difficulty: BOT_CHALLENGE_DIFFICULTY, expiresAt };
+}
+
+export async function verifyBotProof(proof: BotProof) {
+  try {
+    const challenge = await getBotChallenge(proof.challengeId);
+    if (!challenge || challenge.usedAt || challenge.expiresAt.getTime() <= Date.now()) throw new Error("expired challenge");
+    if (!matchesNonce(challenge.nonceHash, proof.nonce)) throw new Error("invalid nonce");
+    if (!validProof(proof.challengeId, proof.nonce, proof.solution, challenge.difficulty)) throw new Error("invalid proof");
+    const consumed = await consumeBotChallenge(proof.challengeId);
+    if (!consumed) throw new Error("reused challenge");
+  } catch (error) {
+    logSecurityEvent("bot_challenge_failed", { kind: "public_form" });
+    throw new TRPCError({ code: "BAD_REQUEST", message: BOT_CHALLENGE_MESSAGE });
+  }
 }
 
 function clientIp(req: Request) {

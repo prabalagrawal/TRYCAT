@@ -1,6 +1,6 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, lt, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { contactRequests, consentEvents, dataRightsRequests, InsertContactRequest, InsertConsentEvent, InsertDataRightsRequest, InsertUser, rateLimitWindows, users } from "../drizzle/schema";
+import { botChallenges, contactRequests, consentEvents, dataRightsRequests, InsertContactRequest, InsertConsentEvent, InsertDataRightsRequest, InsertUser, rateLimitWindows, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -129,4 +129,26 @@ export async function consumeSharedRateLimit(keyHash: string, windowMs: number) 
   const record = await db.select().from(rateLimitWindows).where(eq(rateLimitWindows.keyHash, keyHash)).limit(1);
   if (!record[0]) throw new Error("Rate-limit record unavailable");
   return record[0];
+}
+
+export async function createBotChallenge(record: { challengeId: string; nonceHash: string; difficulty: number; expiresAt: Date }) {
+  const db = await requirePrivacyDb();
+  await db.delete(botChallenges).where(lt(botChallenges.expiresAt, new Date()));
+  await db.insert(botChallenges).values(record);
+}
+
+export async function getBotChallenge(challengeId: string) {
+  const db = await requirePrivacyDb();
+  const record = await db.select().from(botChallenges).where(eq(botChallenges.challengeId, challengeId)).limit(1);
+  return record[0];
+}
+
+export async function consumeBotChallenge(challengeId: string) {
+  const db = await requirePrivacyDb();
+  const result = await db.update(botChallenges).set({ usedAt: new Date() }).where(and(
+    eq(botChallenges.challengeId, challengeId),
+    isNull(botChallenges.usedAt),
+    gt(botChallenges.expiresAt, new Date()),
+  ));
+  return result[0].affectedRows === 1;
 }

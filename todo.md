@@ -26,7 +26,10 @@
 - [x] Add tests for rate limits, validation, and security controls; run build, test, and dependency checks.
 - [x] Create `SECURITY_AUDIT.md` documenting implemented controls, booking/Google/email/calendar non-applicability or future requirements, residual risks, and deployment verification steps.
 - [x] Triage and remediate all high-severity dependency audit findings in a compatibility-tested update branch.
-- [ ] Add a privacy-reviewed, server-verified CAPTCHA or equivalent bot challenge to public forms and test failure-closed behaviour. (Blocked pending a valid provider credential pair.)
+- [x] Add a privacy-reviewed, server-verified CAPTCHA or equivalent bot challenge to public forms and test failure-closed behaviour. (Implemented as a self-hosted, short-lived proof-of-work challenge with no third-party tracker.)
+- [x] Add focused tests for the real proof-of-work verifier covering valid, invalid, expired, and reused proofs without mocking the verifier.
+- [x] Add an integration test covering real challenge issue plus protected submission, with no request persistence after invalid proof verification.
+- [x] Verify browser-visible pre-proof submission blocking and document a real failure-closed invalid-proof result without recording personal data. (Live form progressed from “Securing this form…” to confirmed protection; no-data server integration verified invalid proof rejection with no request persistence.)
 - [ ] Verify deployed TLS redirect, proxy trust, HSTS, database encryption, backup encryption, key management, least privilege, and central security logging before launch. (Requires deployment-owner evidence.)
 
 # TRYCAT Originality and Motion Review
@@ -38,3 +41,9 @@
 - [x] Add the five-stage Diagnose / Clarify / Decide / Design / Deliver methodology journey as a functional, non-generic editorial progression connected to the three-perspective system.
 - [x] Add the final dark convergence CTA that resolves the Business / System / Human story into Clarity, Decision, and Transformation without inventing client outcomes or replacing the approved artwork.
 - [x] Verify keyboard interaction, hover behaviour, scroll story cues, and reduced-motion fallback across the master-artwork interaction and methodology journey.
+
+# Signature Motion Refinement
+
+- [x] Extend the approved master-artwork interaction with a subtle, purposeful three-perspective motion narrative without altering cat silhouettes or using mascot-style animation.
+- [x] Connect active perspective and methodology stage states to diagnostic paths, nodes, and convergence signals so motion explains Business / System / Human rather than decorates the page.
+- [x] Verify the strengthened motion system at desktop and mobile breakpoints, including reduced-motion fallback and interaction accessibility.

@@ -74,6 +74,16 @@ export const rateLimitWindows = mysqlTable("rate_limit_windows", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+/** Short-lived, single-use proof-of-work records for public-form abuse prevention. No raw IP or form data is stored. */
+export const botChallenges = mysqlTable("bot_challenges", {
+  challengeId: varchar("challengeId", { length: 64 }).primaryKey(),
+  nonceHash: varchar("nonceHash", { length: 128 }).notNull(),
+  difficulty: int("difficulty").notNull(),
+  issuedAt: timestamp("issuedAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+});
+
 export type InsertConsentEvent = typeof consentEvents.$inferInsert;
 export type InsertDataRightsRequest = typeof dataRightsRequests.$inferInsert;
 export type InsertContactRequest = typeof contactRequests.$inferInsert;

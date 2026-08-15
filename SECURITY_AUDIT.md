@@ -108,3 +108,24 @@ No critical unresolved application-level vulnerability was identified within the
 > **Dependency remediation update, 15 August 2026:** Unused template-only packages and tooling were removed. Axios, NanoID, PostCSS, Tailwind/Vite tooling, Vitest, esbuild, Drizzle ORM, Express, and type definitions were compatibility-tested and updated. The Express 5 wildcard routes were migrated to named/pathless equivalents. The final `pnpm audit --audit-level=low --prod` returned **“No known vulnerabilities found.”** This does not remove the need for future dependency scanning.
 
 > **Conclusion:** No known unresolved critical application-level vulnerability was identified within the tested scope. The application must **not** be described as “100% secure.” Verified CAPTCHA and production-edge/infrastructure evidence remain release-gating work.
+
+## Verification Update — 15 August 2026
+
+This update supersedes the earlier **CAPTCHA absent** and **live edge unavailable** observations above. The original findings are retained as audit history.
+
+| Verification | Evidence | Current status |
+| --- | --- | --- |
+| Public-form bot protection | Contact and data-rights forms now require a short-lived, single-use, server-stored proof-of-work response. The browser computes the response locally; the server validates nonce integrity, difficulty, expiry, and one-time use before it creates a request record. Rate limiting remains in place. The form reached “Form protection confirmed” in the live browser without a user-data submission. | Implemented and browser-verified |
+| Proof-required persistence | The public form procedures reject missing proof payloads through strict schema validation, and the regression suite asserts proof verification runs before contact persistence. | Implemented and tested |
+| Third-party privacy impact | The proof challenge is self-hosted. It does not load an external CAPTCHA, tracker, or third-party script. | Verified in source and browser route review |
+| Deployed transport and headers | `https://trycatweb-nla462dd.manus.space` returned HSTS (`max-age=31536000; includeSubDomains; preload`), CSP, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, strict referrer policy, and permissions policy. The `http://` equivalent returned `301` to HTTPS. | Deployed edge verified |
+| Database transport | The managed database connection reported cipher `TLS_AES_128_GCM_SHA256` and `require_secure_transport=ON`. | Transport encryption verified |
+| Tests and dependency posture | Type-check, production build, and 9 automated tests passed. The final production dependency audit reported no known vulnerabilities. | Verified |
+
+The remaining release evidence is **operational**, not application-code work: database encryption at rest, encrypted backups, key-management process, database least privilege, central log retention/alerting, and the hosting platform’s handling of untrusted forwarded headers. These require an owner or platform attestation and cannot be inferred from the application source or an external header probe.
+
+### Proof-of-Work Test Detail
+
+The proof-of-work verifier is now covered without mocking the verifier itself. Four focused tests exercise a valid fresh proof plus invalid, expired, and already-consumed proof rejection. A separate public-router integration test issues a real challenge, computes a valid proof, persists a contact request only after verification, then proves that a tampered proof returns the neutral verification error and creates **no** contact record. The full suite now passes **15 tests across 4 test files**.
+
+> **Updated conclusion:** The site’s application-layer public-form protection, deployed web transport, and database connection transport have been verified. The application still must not be described as “100% secure”; the residual operational evidence items remain necessary for an enterprise security claim.

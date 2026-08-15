@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { LegalPageShell, LegalSection } from "@/components/LegalPageShell";
 import { trpc } from "@/lib/trpc";
 import { getOrCreatePrivacySubjectId } from "@/lib/privacy";
+import { ProofOfWorkChallenge, type BotProof } from "@/components/ProofOfWorkChallenge";
 
 const rightOptions = [
   ["access", "Access personal data"],
@@ -13,6 +14,7 @@ const rightOptions = [
 ] as const;
 
 export default function DataRights() {
+  const [subjectId] = useState(() => getOrCreatePrivacySubjectId());
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [requestType, setRequestType] = useState<(typeof rightOptions)[number][0]>("access");
@@ -20,6 +22,7 @@ export default function DataRights() {
   const [requestConsent, setRequestConsent] = useState(false);
   const [requestId, setRequestId] = useState("");
   const [error, setError] = useState("");
+  const [botProof, setBotProof] = useState<BotProof | null>(null);
   const submitRequest = trpc.rights.submit.useMutation();
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -29,7 +32,11 @@ export default function DataRights() {
       setError("Please confirm that TRYCAT may use these details to handle your privacy request.");
       return;
     }
-    submitRequest.mutate({ subjectId: getOrCreatePrivacySubjectId(), name, email, requestType, details: details || undefined, requestHandlingConsent: true }, {
+    if (!botProof) {
+      setError("Form protection is still preparing. Please wait a moment and try again.");
+      return;
+    }
+    submitRequest.mutate({ subjectId, name, email, requestType, details: details || undefined, requestHandlingConsent: true, botProof }, {
       onSuccess: (result) => setRequestId(result.requestId),
       onError: () => setError("We could not record your request. Please try again or email hello@trycat.com."),
     });
@@ -42,8 +49,9 @@ export default function DataRights() {
         <label>What would you like to do?<select value={requestType} onChange={(event) => setRequestType(event.target.value as typeof requestType)}>{rightOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label>Request details <span className="field-optional">optional</span><textarea value={details} onChange={(event) => setDetails(event.target.value)} placeholder="Tell us enough to locate or understand your request. Please do not include unnecessary sensitive data." /></label>
         <div className="consent-field"><label><input required type="checkbox" checked={requestConsent} onChange={(event) => setRequestConsent(event.target.checked)} /><span><strong>Request-handling permission</strong><small>I agree that TRYCAT may use these details to verify and respond to this rights or grievance request under the <a href="/privacy">Privacy Notice</a>.</small></span></label></div>
+        <ProofOfWorkChallenge subjectId={subjectId} onSolved={setBotProof} />
         {error && <p className="form-error" role="alert">{error}</p>}
-        <button className="form-submit" type="submit" disabled={submitRequest.isPending}>{submitRequest.isPending ? "Recording…" : <>Submit request <ArrowRight size={17} /></>}</button>
+        <button className="form-submit" type="submit" disabled={submitRequest.isPending || !botProof}>{submitRequest.isPending ? "Recording…" : <>Submit request <ArrowRight size={17} /></>}</button>
       </form>}
     </LegalSection>
     <LegalSection title="Verification and timing"><p>To protect your data, TRYCAT may ask for information reasonably necessary to verify your identity. The current draft operating period for privacy records is 36 months after closure. This period, response targets, escalation route, and any refusal grounds require legal and operational approval before launch.</p><p>You may also email <a href="mailto:hello@trycat.com">hello@trycat.com</a> for a privacy question or grievance.</p></LegalSection>

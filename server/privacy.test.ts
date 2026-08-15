@@ -7,11 +7,20 @@ const dbMocks = vi.hoisted(() => ({
   consumeSharedRateLimit: vi.fn(),
 }));
 
+const securityMocks = vi.hoisted(() => ({
+  verifyBotProof: vi.fn(),
+}));
+
 vi.mock("./db", () => dbMocks);
+vi.mock("./security", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./security")>();
+  return { ...actual, verifyBotProof: securityMocks.verifyBotProof };
+});
 
 import { appRouter } from "./routers";
 
 const subjectId = "f554210e-3d67-4b6a-b42b-27e57e7dcc61";
+const botProof = { challengeId: "challenge-id-0001", nonce: "nonce-value-that-is-long-enough", solution: "42" };
 
 function createCaller() {
   return appRouter.createCaller({
@@ -24,10 +33,13 @@ function createCaller() {
 describe("privacy controls", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbMocks.consumeSharedRateLimit.mockReset();
+    securityMocks.verifyBotProof.mockReset();
     dbMocks.consumeSharedRateLimit.mockResolvedValue({
       attemptCount: 1,
       windowStartedAt: new Date(),
     });
+    securityMocks.verifyBotProof.mockResolvedValue(undefined);
   });
 
   it("records an explicit analytics decision with a notice version", async () => {
@@ -56,6 +68,7 @@ describe("privacy controls", () => {
       requestType: "erasure",
       details: "Please erase my contact enquiry.",
       requestHandlingConsent: true,
+      botProof,
     });
 
     expect(result.requestId).toMatch(/^TR-R-/);
@@ -81,6 +94,7 @@ describe("privacy controls", () => {
       message: "We need help mapping a complex transformation programme.",
       contactProcessingConsent: true,
       marketingOptIn: false,
+      botProof,
     });
 
     expect(result.requestId).toMatch(/^TR-C-/);
@@ -114,6 +128,7 @@ describe("privacy controls", () => {
       message: "We need help mapping a complex transformation programme.",
       contactProcessingConsent: true,
       marketingOptIn: false,
+      botProof,
     })).rejects.toThrow("Too many attempts. Please wait a few minutes and try again.");
     expect(dbMocks.insertContactRequest).not.toHaveBeenCalled();
   });
@@ -129,5 +144,32 @@ describe("privacy controls", () => {
       unexpected: "not allowed",
     } as never)).rejects.toThrow();
     expect(dbMocks.insertContactRequest).not.toHaveBeenCalled();
+  });
+
+  it("requires a proof response before a public contact record is created", async () => {
+    await expect(createCaller().contact.submit({
+      subjectId,
+      name: "Arjun Rao",
+      email: "arjun@example.com",
+      message: "We need help mapping a complex transformation programme.",
+      contactProcessingConsent: true,
+      marketingOptIn: false,
+    } as never)).rejects.toThrow();
+    expect(securityMocks.verifyBotProof).not.toHaveBeenCalled();
+    expect(dbMocks.insertContactRequest).not.toHaveBeenCalled();
+  });
+
+  it("verifies the proof response before persisting a public contact record", async () => {
+    await createCaller().contact.submit({
+      subjectId,
+      name: "Arjun Rao",
+      email: "arjun@example.com",
+      message: "We need help mapping a complex transformation programme.",
+      contactProcessingConsent: true,
+      marketingOptIn: false,
+      botProof,
+    });
+    expect(securityMocks.verifyBotProof).toHaveBeenCalledWith(botProof);
+    expect(dbMocks.insertContactRequest).toHaveBeenCalled();
   });
 });

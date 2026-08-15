@@ -3,8 +3,10 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { LegalPageShell, LegalSection } from "@/components/LegalPageShell";
 import { trpc } from "@/lib/trpc";
 import { getOrCreatePrivacySubjectId } from "@/lib/privacy";
+import { ProofOfWorkChallenge, type BotProof } from "@/components/ProofOfWorkChallenge";
 
 export default function Contact() {
+  const [subjectId] = useState(() => getOrCreatePrivacySubjectId());
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [organisation, setOrganisation] = useState("");
@@ -13,6 +15,7 @@ export default function Contact() {
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [requestId, setRequestId] = useState("");
   const [error, setError] = useState("");
+  const [botProof, setBotProof] = useState<BotProof | null>(null);
   const submitContact = trpc.contact.submit.useMutation();
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -22,7 +25,11 @@ export default function Contact() {
       setError("Please confirm that TRYCAT may process this request so we can respond.");
       return;
     }
-    submitContact.mutate({ subjectId: getOrCreatePrivacySubjectId(), name, email, organisation: organisation || undefined, message, contactProcessingConsent: true, marketingOptIn }, {
+    if (!botProof) {
+      setError("Form protection is still preparing. Please wait a moment and try again.");
+      return;
+    }
+    submitContact.mutate({ subjectId, name, email, organisation: organisation || undefined, message, contactProcessingConsent: true, marketingOptIn, botProof }, {
       onSuccess: (result) => setRequestId(result.requestId),
       onError: () => setError("We could not submit your request. No confirmation has been recorded. Please try again or email hello@trycat.com."),
     });
@@ -35,10 +42,11 @@ export default function Contact() {
         <label>Organisation <span className="field-optional">optional</span><input value={organisation} onChange={(event) => setOrganisation(event.target.value)} autoComplete="organization" /></label>
         <label>What would you like to explore?<textarea required minLength={10} value={message} onChange={(event) => setMessage(event.target.value)} /></label>
         <div className="consent-field"><label><input required type="checkbox" checked={contactConsent} onChange={(event) => setContactConsent(event.target.checked)} /><span><strong>Contact-request permission</strong><small>I agree that TRYCAT may use the information above to respond to my request. See the <a href="/privacy">Privacy Notice</a>.</small></span></label><label><input type="checkbox" checked={marketingOptIn} onChange={(event) => setMarketingOptIn(event.target.checked)} /><span><strong>Optional future updates</strong><small>I would like to receive occasional TRYCAT insights and updates. This is optional and is not needed for a reply.</small></span></label></div>
+        <ProofOfWorkChallenge subjectId={subjectId} onSolved={setBotProof} />
         {error && <p className="form-error" role="alert">{error}</p>}
-        <button className="form-submit" type="submit" disabled={submitContact.isPending}>{submitContact.isPending ? "Submitting…" : <>Send request <ArrowRight size={17} /></>}</button>
+        <button className="form-submit" type="submit" disabled={submitContact.isPending || !botProof}>{submitContact.isPending ? "Submitting…" : <>Send request <ArrowRight size={17} /></>}</button>
       </form>}
     </LegalSection>
-    <LegalSection title="What happens next"><p>Your request is stored for up to 12 months after the last meaningful interaction under the current draft retention schedule. You can ask to correct, erase, or withdraw consent for this information using the <a href="/rights">Data Rights Request form</a>.</p><p className="legal-review">Operational review required: this public form has no verified CAPTCHA or abuse-prevention service in the current build. Do not treat it as production-hardened until server-side bot verification and rate limiting are deployed.</p></LegalSection>
+    <LegalSection title="What happens next"><p>Your request is stored for up to 12 months after the last meaningful interaction under the current draft retention schedule. You can ask to correct, erase, or withdraw consent for this information using the <a href="/rights">Data Rights Request form</a>.</p><p className="legal-review">This form uses a short-lived, server-verified proof-of-work check alongside rate limiting. It does not add an external tracker or replace operational anti-abuse monitoring.</p></LegalSection>
   </LegalPageShell>;
 }

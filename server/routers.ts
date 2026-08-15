@@ -5,12 +5,17 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { insertContactRequest, insertConsentEvent, insertDataRightsRequest } from "./db";
-import { enforceSensitiveRateLimit } from "./security";
+import { enforceSensitiveRateLimit, issueBotChallenge, verifyBotProof } from "./security";
 
 const noticeVersion = "2026-08-15-draft";
 const browserSubjectId = z.string().uuid();
 const consentPurpose = z.enum(["analytics", "contact_request", "rights_request", "marketing"]);
 const consentChoice = z.enum(["granted", "denied", "withdrawn"]);
+const botProof = z.object({
+  challengeId: z.string().min(12).max(64),
+  nonce: z.string().min(16).max(96),
+  solution: z.string().regex(/^\d{1,9}$/),
+}).strict();
 
 function addMonths(months: number) {
   const retentionUntil = new Date();
@@ -48,6 +53,12 @@ export const appRouter = router({
       }),
   }),
 
+  botChallenge: router({
+    issue: publicProcedure
+      .input(z.object({ subjectId: browserSubjectId }).strict())
+      .mutation(({ input, ctx }) => issueBotChallenge(ctx, input.subjectId)),
+  }),
+
   rights: router({
     submit: publicProcedure
       .input(z.object({
@@ -57,9 +68,11 @@ export const appRouter = router({
         requestType: z.enum(["access", "correction", "erasure", "withdrawal", "grievance"]),
         details: z.string().trim().max(2500).optional(),
         requestHandlingConsent: z.literal(true),
+        botProof,
       }).strict())
       .mutation(async ({ input, ctx }) => {
         await enforceSensitiveRateLimit(ctx, "rights.submit", input.email);
+        await verifyBotProof(input.botProof);
         const requestId = `TR-R-${nanoid(12)}`;
         await insertDataRightsRequest({ requestId, name: input.name, email: input.email, requestType: input.requestType, details: input.details || null, noticeVersion, retentionUntil: addMonths(36) });
         await insertConsentEvent({ subjectId: input.subjectId, purpose: "rights_request", choice: "granted", noticeVersion, source: "rights_form", retentionUntil: addMonths(24) });
@@ -77,9 +90,11 @@ export const appRouter = router({
         message: z.string().trim().min(10).max(3000),
         contactProcessingConsent: z.literal(true),
         marketingOptIn: z.boolean(),
+        botProof,
       }).strict())
       .mutation(async ({ input, ctx }) => {
         await enforceSensitiveRateLimit(ctx, "contact.submit", input.email);
+        await verifyBotProof(input.botProof);
         const requestId = `TR-C-${nanoid(12)}`;
         await insertContactRequest({ requestId, name: input.name, email: input.email, organisation: input.organisation || null, message: input.message, marketingOptIn: input.marketingOptIn ? "granted" : "not_granted", noticeVersion, retentionUntil: addMonths(12) });
         await insertConsentEvent({ subjectId: input.subjectId, purpose: "contact_request", choice: "granted", noticeVersion, source: "contact_form", retentionUntil: addMonths(24) });

@@ -122,7 +122,8 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function HeroArtwork({ active, onActivate }: { active: PerspectiveKey | null; onActivate: (key: PerspectiveKey | null) => void }) {
+function HeroArtwork({ active, stage, onActivate }: { active: PerspectiveKey | null; stage: number; onActivate: (key: PerspectiveKey | null) => void }) {
+  const motionStages = ["DIAGNOSE", "CLARIFY", "DECIDE", "DESIGN", "DELIVER"];
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const frame = event.currentTarget;
     const bounds = frame.getBoundingClientRect();
@@ -138,7 +139,7 @@ function HeroArtwork({ active, onActivate }: { active: PerspectiveKey | null; on
   };
 
   return (
-    <div className={`artwork-stage ${active ? `is-${active}` : ""}`}>
+    <div className={`artwork-stage stage-${stage} ${active ? `is-${active}` : ""}`}>
       <div className="artwork-meta artwork-meta-top">
         <span>MASTER ARTWORK / 01</span>
         <span className="meta-live"><CircleDot size={10} /> LIVE SYSTEM</span>
@@ -147,6 +148,15 @@ function HeroArtwork({ active, onActivate }: { active: PerspectiveKey | null; on
         <img className="master-artwork" src={MASTER_ARTWORK} alt="TRYCAT three-cat logo: analyst grey, navigator black, and designer ginger" />
         <div className="artwork-grid-lines" aria-hidden="true" />
         <div className="artwork-observation-field" aria-hidden="true" />
+        <svg className="artwork-routes" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true">
+          <path className="route route-business" d="M 88 430 C 195 382, 250 328, 340 258 S 458 136, 510 83" />
+          <path className="route route-system" d="M 500 494 C 492 407, 507 337, 509 264 S 507 150, 510 83" />
+          <path className="route route-human" d="M 905 424 C 792 374, 736 318, 650 248 S 565 136, 510 83" />
+          <circle className="route-node node-business" cx="88" cy="430" r="10" />
+          <circle className="route-node node-system" cx="500" cy="494" r="10" />
+          <circle className="route-node node-human" cx="905" cy="424" r="10" />
+          <circle className="route-node node-convergence" cx="510" cy="83" r="12" />
+        </svg>
         <div className="artwork-lens lens-business" aria-hidden="true"><span>01</span> BUSINESS / OBSERVE</div>
         <div className="artwork-lens lens-system" aria-hidden="true"><span>02</span> SYSTEM / CONNECT</div>
         <div className="artwork-lens lens-human" aria-hidden="true"><span>03</span> HUMAN / DESIGN</div>
@@ -157,6 +167,7 @@ function HeroArtwork({ active, onActivate }: { active: PerspectiveKey | null; on
         </div>
         <div className="artwork-signal signal-one" aria-hidden="true" />
         <div className="artwork-signal signal-two" aria-hidden="true" />
+        <div className="artwork-route-readout" aria-hidden="true"><span>STAGE 0{stage + 1}</span><strong>{motionStages[stage]}</strong><i>→</i></div>
       </div>
       <div className="artwork-meta artwork-meta-bottom">
         <span>BUSINESS / SYSTEM / HUMAN</span>
@@ -259,7 +270,7 @@ export default function Home() {
               <div className="hero-footnote"><span>TRYCAT™ / 2026</span><span>THREE PERSPECTIVES. ONE CLEAR DIRECTION.</span></div>
             </div>
             <div className="hero-visual-wrap">
-              <HeroArtwork active={activePerspective} onActivate={(key) => key && setActivePerspective(key)} />
+              <HeroArtwork active={activePerspective} stage={activeStage} onActivate={(key) => key && setActivePerspective(key)} />
               <div className="hero-visual-note"><span>01</span><span>LOOK CLOSER <ArrowDownRight size={14} /></span></div>
             </div>
           </div>
@@ -293,7 +304,7 @@ export default function Home() {
             <div className="journey-heading"><p className="eyebrow">Not a linear template</p><h2>Observe. Connect.<br /><span>Move with intent.</span></h2><p>TRYCAT turns the three perspectives into a working progression. Each stage changes what the next decision can see.</p></div>
             <div className="journey-system">
               <ol className="journey-stages" aria-label="Five TRYCAT methodology stages">
-                {methodStages.map((stage, index) => <li key={stage.label}><button type="button" className={activeStage === index ? "active" : ""} onClick={() => setActiveStage(index)} aria-pressed={activeStage === index}><span>{stage.number}</span><strong>{stage.label}</strong><i>{stage.cue}</i></button></li>)}
+                {methodStages.map((stage, index) => <li key={stage.label}><button type="button" className={activeStage === index ? "active" : ""} onClick={() => setActiveStage(index)} onMouseEnter={() => setActiveStage(index)} onFocus={() => setActiveStage(index)} aria-pressed={activeStage === index}><span>{stage.number}</span><strong>{stage.label}</strong><i>{stage.cue}</i></button></li>)}
               </ol>
               <article className="journey-detail" aria-live="polite">
                 <div className="journey-detail-top"><span>{activeMethodStage.number} / {activeMethodStage.cue}</span><span>BUSINESS + SYSTEM + HUMAN</span></div>
