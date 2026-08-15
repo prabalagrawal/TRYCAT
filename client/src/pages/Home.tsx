@@ -1,5 +1,5 @@
 // TRYCAT style reminder: Signal / Structure — neo-grotesk editorial systems design, warm ivory field, carbon structure, ginger action signals, selective indigo intelligence, and the supplied three-cat artwork as the immutable visual source.
-import { useEffect, useState } from "react";
+import { useEffect, useState, type PointerEvent } from "react";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -123,15 +123,33 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 function HeroArtwork({ active, onActivate }: { active: PerspectiveKey | null; onActivate: (key: PerspectiveKey | null) => void }) {
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const frame = event.currentTarget;
+    const bounds = frame.getBoundingClientRect();
+    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+    frame.style.setProperty("--cursor-x", `${x}%`);
+    frame.style.setProperty("--cursor-y", `${y}%`);
+  };
+
+  const handlePointerLeave = (event: PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.style.removeProperty("--cursor-x");
+    event.currentTarget.style.removeProperty("--cursor-y");
+  };
+
   return (
     <div className={`artwork-stage ${active ? `is-${active}` : ""}`}>
       <div className="artwork-meta artwork-meta-top">
         <span>MASTER ARTWORK / 01</span>
         <span className="meta-live"><CircleDot size={10} /> LIVE SYSTEM</span>
       </div>
-      <div className="artwork-frame">
+      <div className="artwork-frame" onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
         <img className="master-artwork" src={MASTER_ARTWORK} alt="TRYCAT three-cat logo: analyst grey, navigator black, and designer ginger" />
         <div className="artwork-grid-lines" aria-hidden="true" />
+        <div className="artwork-observation-field" aria-hidden="true" />
+        <div className="artwork-lens lens-business" aria-hidden="true"><span>01</span> BUSINESS / OBSERVE</div>
+        <div className="artwork-lens lens-system" aria-hidden="true"><span>02</span> SYSTEM / CONNECT</div>
+        <div className="artwork-lens lens-human" aria-hidden="true"><span>03</span> HUMAN / DESIGN</div>
         <div className="cat-hotspots" aria-label="Explore the three TRYCAT perspectives">
           <button className="cat-hotspot cat-hotspot-business" type="button" onMouseEnter={() => onActivate("business")} onMouseLeave={() => onActivate(null)} onFocus={() => onActivate("business")} onBlur={() => onActivate(null)} onClick={() => onActivate(active === "business" ? null : "business")} aria-label="Explore Business perspective" />
           <button className="cat-hotspot cat-hotspot-system" type="button" onMouseEnter={() => onActivate("system")} onMouseLeave={() => onActivate(null)} onFocus={() => onActivate("system")} onBlur={() => onActivate(null)} onClick={() => onActivate(active === "system" ? null : "system")} aria-label="Explore System perspective" />
@@ -196,6 +214,7 @@ export default function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activePerspective, setActivePerspective] = useState<PerspectiveKey>("business");
   const [selectedProblem, setSelectedProblem] = useState(0);
+  const [activeStage, setActiveStage] = useState(0);
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
@@ -210,6 +229,14 @@ export default function Home() {
     { label: "THE LOOP", title: "The same problem keeps returning in a new disguise.", copy: "Recurring problems are rarely single-point failures. We connect business conditions, human behaviour, and system mechanics to change the pattern itself." },
     { label: "THE MOMENT", title: "A consequential choice needs more than a quick answer.", copy: "When the stakes rise, speed without understanding creates expensive noise. We create the shared view that makes the next move more deliberate." },
   ];
+  const methodStages = [
+    { number: "01", label: "DIAGNOSE", cue: "OBSERVE", copy: "Bring the evidence, the friction, and the unanswered questions into one field of view." },
+    { number: "02", label: "CLARIFY", cue: "CONNECT", copy: "Separate the symptom from the conditions that keep the pattern in place." },
+    { number: "03", label: "DECIDE", cue: "PRIORITISE", copy: "Identify the move that matters, with a shared basis for choosing it." },
+    { number: "04", label: "DESIGN", cue: "MAKE USEFUL", copy: "Shape the response around people, operational reality, and the work ahead." },
+    { number: "05", label: "DELIVER", cue: "MOVE", copy: "Turn the direction into a sequence that can travel through the organisation." },
+  ];
+  const activeMethodStage = methodStages[activeStage];
 
   return (
     <div id="top" className={`site-shell ${scrollY > 32 ? "has-scrolled" : ""}`}>
@@ -260,6 +287,23 @@ export default function Home() {
           </div>
         </section>
 
+        <section id="method-journey" className={`method-journey is-stage-${activeStage}`}>
+          <div className="page-width journey-inner">
+            <SectionRail number="02.1" label="THE MOVEMENT" />
+            <div className="journey-heading"><p className="eyebrow">Not a linear template</p><h2>Observe. Connect.<br /><span>Move with intent.</span></h2><p>TRYCAT turns the three perspectives into a working progression. Each stage changes what the next decision can see.</p></div>
+            <div className="journey-system">
+              <ol className="journey-stages" aria-label="Five TRYCAT methodology stages">
+                {methodStages.map((stage, index) => <li key={stage.label}><button type="button" className={activeStage === index ? "active" : ""} onClick={() => setActiveStage(index)} aria-pressed={activeStage === index}><span>{stage.number}</span><strong>{stage.label}</strong><i>{stage.cue}</i></button></li>)}
+              </ol>
+              <article className="journey-detail" aria-live="polite">
+                <div className="journey-detail-top"><span>{activeMethodStage.number} / {activeMethodStage.cue}</span><span>BUSINESS + SYSTEM + HUMAN</span></div>
+                <div><h3>{activeMethodStage.label}.</h3><p>{activeMethodStage.copy}</p></div>
+                <div className="journey-convergence"><img src={SYMBOL_ARTWORK} alt="" /><span>CLARITY <b>→</b> DECISION <b>→</b> TRANSFORMATION</span></div>
+              </article>
+            </div>
+          </div>
+        </section>
+
         <section id="problems" className="problems-section section-light">
           <div className="page-width problems-inner">
             <SectionRail number="03" label="THE PROBLEMS" />
@@ -289,7 +333,7 @@ export default function Home() {
 
         <section id="about" className="about-section section-indigo"><div className="page-width about-inner"><SectionRail number="06" label="THE STUDIO" dark /><div className="about-copy"><p className="eyebrow eyebrow-light">Business intelligence / Design practice</p><h2>See the whole.<br /><span>Move with intent.</span></h2><p>TRYCAT is a methodology and a way of working for the moments that ask more of a team than an answer. We connect analysis, systems thinking, and human understanding to make the next move clearer.</p><a className="text-link text-link-light" href="mailto:hello@trycat.com?subject=Meet TRYCAT">Meet TRYCAT <ArrowUpRight size={16} /></a></div><div className="about-mark"><img src={SYMBOL_ARTWORK} alt="" /><span>TRYCAT™<br />SEE THE WHOLE.</span></div></div></section>
 
-        <section className="contact-section section-light"><div className="page-width contact-inner"><div><p className="eyebrow">Start with the messy version</p><h2>Bring the problem.<br /><span>We’ll map the whole.</span></h2></div><div className="contact-action"><p>Tell us where the system feels stuck. We’ll start there — not with a pre-packaged answer.</p><a className="button button-primary" href="/contact">Book a call <ArrowUpRight size={17} /></a></div></div></section>
+        <section className="convergence-section"><div className="convergence-grid" aria-hidden="true" /><div className="page-width convergence-inner"><SectionRail number="07" label="THE CONVERGENCE" dark /><div className="convergence-copy"><p className="eyebrow eyebrow-light">Business + System + Human</p><h2>Ready to<br /><span>see the whole?</span></h2><p>Bring us the problem before you bring us the solution. We’ll begin by making the conditions visible.</p><a className="button button-primary" href="/contact">Book a call <ArrowUpRight size={17} /></a></div><div className="convergence-mark"><img src={SYMBOL_ARTWORK} alt="" /><span>CLARITY<br />DECISION<br /><b>TRANSFORMATION</b></span></div></div></section>
       </main>
 
       <footer className="site-footer"><div className="page-width footer-inner"><div className="footer-top"><div className="footer-brand"><span className="footer-wordmark">TRYCAT<span>™</span></span><p>Business Problem-Solving<br />& Transformation Methodology</p></div><div className="footer-tagline">SEE THE<br /><em>WHOLE.</em></div></div><div className="footer-bottom"><span>© TRYCAT 2026</span><span>BUSINESS / HUMAN / SYSTEM</span><span className="footer-privacy-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/rights">Data rights</a></span><a href="mailto:hello@trycat.com">Privacy & grievance: hello@trycat.com <ArrowUpRight size={14} /></a></div></div></footer>

@@ -51,7 +51,6 @@ No critical unresolved application-level vulnerability was identified within the
 
 | Finding | Description | Affected component | Potential impact | Evidence | Recommended remediation | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| Dependency vulnerabilities require remediation | The package-manager audit reported **72 vulnerabilities: 17 high, 47 moderate, 8 low**. The audit identified affected package families including `tar`, `vite`, `esbuild`, and `pnpm`; an example chain was `streamdown → mermaid`. | Dependency tree / build toolchain | Known vulnerable dependency behaviour may become exploitable depending on deployment and use. | `pnpm audit --audit-level=low --prod`, 15 Aug 2026. | Review each advisory, update direct/transitive packages in a compatibility branch, rebuild, and retest. Do not publish until high-severity advisories are dispositioned. | Open |
 | CAPTCHA / bot verification absent | Contact and rights forms have server rate limits and validation but no verified CAPTCHA or challenge service. | Public contact and rights forms | Targeted spam or distributed abuse may still consume rate-limit capacity or operational review time. | Source and route review. | Add verified server-side bot protection (for example, a privacy-reviewed provider), retain rate limits, and test failure-closed verification. | Open |
 | Production security depends on trusted proxy configuration | HTTPS enforcement and HSTS are applied after the app detects HTTPS through Express/trusted proxy headers. | Deployment edge / Express | Incorrect proxy configuration could cause false rejects, missing HSTS, or incorrect client IP attribution. | Local production test with `X-Forwarded-Proto: https`; no production-edge configuration evidence available. | Verify the production load balancer strips untrusted forwarded headers, sets protocol correctly, forces HTTPS, and preserves expected host/origin. | Open |
 
@@ -100,11 +99,12 @@ No critical unresolved application-level vulnerability was identified within the
 
 | Issue | Severity | Why it remains | Recommended next action |
 | --- | --- | --- | --- |
-| Dependency audit findings | High | Security upgrades were not applied blindly because they may require compatibility changes. | Triage every advisory, update in a dedicated dependency branch, retest, and record accepted exceptions. |
 | CAPTCHA absent | High | No bot-verification provider or key has been selected/configured. | Select a privacy-reviewed provider, configure credentials through managed secrets, and fail closed on verification errors. |
 | Production-edge HTTPS/proxy proof | High | Local test simulated a trusted TLS proxy; live edge configuration was not available for inspection. | Perform a deployed header scan and confirm load-balancer trust/redirect settings before release. |
 | Platform session fallback | Medium | Runtime uses session storage fallback for constrained browser contexts. | Confirm production behaviour with platform owner; eliminate browser token fallback if possible. |
 | Encryption and database infrastructure evidence | Medium | App source cannot prove data-at-rest, backup, key-management, or network controls. | Obtain formal infrastructure evidence and verify least-privilege database configuration. |
 | Rate-limit data cleanup | Medium | No approved periodic cleanup process is defined. | Add a scheduled cleanup only after retention/legal approval, using the platform-supported scheduler. |
 
-> **Conclusion:** No known unresolved critical application-level vulnerability was identified within the tested scope. The application must **not** be described as “100% secure.” The high-severity dependency findings, CAPTCHA gap, and production-edge verification remain release-gating work.
+> **Dependency remediation update, 15 August 2026:** Unused template-only packages and tooling were removed. Axios, NanoID, PostCSS, Tailwind/Vite tooling, Vitest, esbuild, Drizzle ORM, Express, and type definitions were compatibility-tested and updated. The Express 5 wildcard routes were migrated to named/pathless equivalents. The final `pnpm audit --audit-level=low --prod` returned **“No known vulnerabilities found.”** This does not remove the need for future dependency scanning.
+
+> **Conclusion:** No known unresolved critical application-level vulnerability was identified within the tested scope. The application must **not** be described as “100% secure.” Verified CAPTCHA and production-edge/infrastructure evidence remain release-gating work.
