@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { contactRequests, consentEvents, dataRightsRequests, InsertContactRequest, InsertConsentEvent, InsertDataRightsRequest, InsertUser, users } from "../drizzle/schema";
+import { contactRequests, consentEvents, dataRightsRequests, InsertContactRequest, InsertConsentEvent, InsertDataRightsRequest, InsertUser, rateLimitWindows, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -111,4 +111,22 @@ export async function insertDataRightsRequest(record: InsertDataRightsRequest) {
 export async function insertContactRequest(record: InsertContactRequest) {
   const db = await requirePrivacyDb();
   await db.insert(contactRequests).values(record);
+}
+
+export async function consumeSharedRateLimit(keyHash: string, windowMs: number) {
+  const db = await requirePrivacyDb();
+  const windowSeconds = Math.max(1, Math.floor(windowMs / 1000));
+
+  await db.execute(sql`
+    INSERT INTO rate_limit_windows (keyHash, windowStartedAt, attemptCount, updatedAt)
+    VALUES (${keyHash}, UTC_TIMESTAMP(), 1, UTC_TIMESTAMP())
+    ON DUPLICATE KEY UPDATE
+      attemptCount = IF(windowStartedAt <= DATE_SUB(UTC_TIMESTAMP(), INTERVAL ${windowSeconds} SECOND), 1, attemptCount + 1),
+      windowStartedAt = IF(windowStartedAt <= DATE_SUB(UTC_TIMESTAMP(), INTERVAL ${windowSeconds} SECOND), UTC_TIMESTAMP(), windowStartedAt),
+      updatedAt = UTC_TIMESTAMP()
+  `);
+
+  const record = await db.select().from(rateLimitWindows).where(eq(rateLimitWindows.keyHash, keyHash)).limit(1);
+  if (!record[0]) throw new Error("Rate-limit record unavailable");
+  return record[0];
 }

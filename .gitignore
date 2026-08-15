@@ -13,6 +13,19 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
+
+# Credentials and private key material
+credentials/
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*service-account*.json
+*service_account*.json
 
 # IDE and editor files
 .vscode/

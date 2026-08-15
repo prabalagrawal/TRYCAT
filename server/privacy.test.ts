@@ -4,6 +4,7 @@ const dbMocks = vi.hoisted(() => ({
   insertConsentEvent: vi.fn(),
   insertContactRequest: vi.fn(),
   insertDataRightsRequest: vi.fn(),
+  consumeSharedRateLimit: vi.fn(),
 }));
 
 vi.mock("./db", () => dbMocks);
@@ -16,13 +17,17 @@ function createCaller() {
   return appRouter.createCaller({
     user: null,
     req: { protocol: "https", headers: {} },
-    res: {},
+    res: { setHeader: vi.fn() },
   } as never);
 }
 
 describe("privacy controls", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbMocks.consumeSharedRateLimit.mockResolvedValue({
+      attemptCount: 1,
+      windowStartedAt: new Date(),
+    });
   });
 
   it("records an explicit analytics decision with a notice version", async () => {
@@ -94,5 +99,35 @@ describe("privacy controls", () => {
       noticeVersion: "2026-08-15-draft",
       source: "consent_banner",
     })).rejects.toThrow("database unavailable");
+  });
+
+  it("rejects repeated sensitive submissions with a neutral rate-limit response", async () => {
+    dbMocks.consumeSharedRateLimit.mockResolvedValueOnce({
+      attemptCount: 6,
+      windowStartedAt: new Date(),
+    });
+
+    await expect(createCaller().contact.submit({
+      subjectId,
+      name: "Arjun Rao",
+      email: "arjun@example.com",
+      message: "We need help mapping a complex transformation programme.",
+      contactProcessingConsent: true,
+      marketingOptIn: false,
+    })).rejects.toThrow("Too many attempts. Please wait a few minutes and try again.");
+    expect(dbMocks.insertContactRequest).not.toHaveBeenCalled();
+  });
+
+  it("rejects unexpected fields and oversized contact messages before persistence", async () => {
+    await expect(createCaller().contact.submit({
+      subjectId,
+      name: "Arjun Rao",
+      email: "arjun@example.com",
+      message: "x".repeat(3001),
+      contactProcessingConsent: true,
+      marketingOptIn: false,
+      unexpected: "not allowed",
+    } as never)).rejects.toThrow();
+    expect(dbMocks.insertContactRequest).not.toHaveBeenCalled();
   });
 });

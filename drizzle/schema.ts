@@ -66,6 +66,14 @@ export const contactRequests = mysqlTable("contact_requests", {
   retentionUntil: timestamp("retentionUntil").notNull(),
 }, (table) => ({ requestIdUnique: uniqueIndex("contact_requests_request_id_unique").on(table.requestId) }));
 
+/** Shared rate-limit counters keyed by an HMAC, never by a raw IP address or email. */
+export const rateLimitWindows = mysqlTable("rate_limit_windows", {
+  keyHash: varchar("keyHash", { length: 128 }).primaryKey(),
+  windowStartedAt: timestamp("windowStartedAt").defaultNow().notNull(),
+  attemptCount: int("attemptCount").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type InsertConsentEvent = typeof consentEvents.$inferInsert;
 export type InsertDataRightsRequest = typeof dataRightsRequests.$inferInsert;
 export type InsertContactRequest = typeof contactRequests.$inferInsert;
