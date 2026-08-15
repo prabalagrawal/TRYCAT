@@ -124,8 +124,33 @@ This update supersedes the earlier **CAPTCHA absent** and **live edge unavailabl
 
 The remaining release evidence is **operational**, not application-code work: database encryption at rest, encrypted backups, key-management process, database least privilege, central log retention/alerting, and the hosting platform’s handling of untrusted forwarded headers. These require an owner or platform attestation and cannot be inferred from the application source or an external header probe.
 
+Managed production-log retrieval was also attempted on 15 August 2026 and returned a platform-level `cloudrun service not found` response. This does not demonstrate an application error, but it means central log delivery, retention, and alerting cannot be evidenced through this project session. The deployment owner should confirm the published service identifier and provide the logging/retention configuration before an enterprise security assertion is made.
+
 ### Proof-of-Work Test Detail
 
 The proof-of-work verifier is now covered without mocking the verifier itself. Four focused tests exercise a valid fresh proof plus invalid, expired, and already-consumed proof rejection. A separate public-router integration test issues a real challenge, computes a valid proof, persists a contact request only after verification, then proves that a tampered proof returns the neutral verification error and creates **no** contact record. The full suite now passes **15 tests across 4 test files**.
 
 > **Updated conclusion:** The site’s application-layer public-form protection, deployed web transport, and database connection transport have been verified. The application still must not be described as “100% secure”; the residual operational evidence items remain necessary for an enterprise security claim.
+
+## PLATFORM / DEPLOYMENT VERIFICATION REQUIRED
+
+> **Status rule:** None of the entries in this section are verified by this codebase. They remain open until the production deployment owner supplies current, environment-specific evidence. This section is intentionally platform-neutral so it can be used with Manus built-in hosting, Vercel, Netlify, or another approved provider.
+
+| Unresolved item | Security importance | Evidence required before verification | Responsible owner / platform |
+| --- | --- | --- | --- |
+| Encryption at rest for production database and storage | Limits the impact of unauthorised infrastructure or media access. | Provider control statement or console evidence showing encryption at rest for the production database, object/file storage, and snapshots; identify the cipher/key service where disclosed. | Hosting/database/storage platform and deployment owner. |
+| Encrypted, access-controlled backups and retention | Supports recovery without creating an unprotected secondary copy of personal data. | Backup policy, encryption status, retention period, access-control list/role evidence, restore-test record, and deletion/disposal process. | Database/storage platform and deployment owner. |
+| Secret and key management | Prevents credentials, API keys, and signing material from reaching source control, logs, or frontend bundles. | Environment/secret inventory, access-role evidence, rotation/revocation process, and confirmation that production values are server-only where required. | Deployment owner and hosting platform secret/key-management service. |
+| Database least privilege | Limits blast radius if an application credential is compromised. | Database user/grant review showing the application account has only required schema/table operations; separate migration/admin access; network-access configuration. | Database administrator or managed database platform. |
+| Trusted proxy headers and client-IP handling | Prevents spoofed protocol/IP headers from bypassing HTTPS enforcement, origin checks, or rate limiting. | Load-balancer/CDN configuration showing HTTPS termination, HTTP redirect, forwarding of trusted protocol/client-IP headers, stripping or overwrite of inbound client-supplied forwarding headers, and the Express `trust proxy` compatibility decision. | Hosting/CDN/load-balancer platform and deployment owner. |
+| Centralised logging, retention, access control, and alerting | Enables detection, investigation, and accountable response to security-relevant events. | Log destination, retention policy, encryption/access controls, alert rules for authentication, rate-limit, proof-verification, and server errors, plus an alert-delivery test. | Logging/observability platform and deployment owner. |
+
+### Hosting Handoff Matrix
+
+| Hosting choice | Application-code status | Platform evidence the owner must obtain | Security claim permitted before evidence |
+| --- | --- | --- | --- |
+| Manus built-in hosting | The current project is deployed on the managed domain and externally observed HTTP→HTTPS, HSTS, CSP, and header controls are recorded above. | Managed service/security documentation or support attestation for data at rest, backups, secrets, database roles, proxy trust, and central logs. | Only the observed deployed web-transport controls and application-level controls may be claimed. |
+| Vercel | The Express/full-stack runtime, database integration, server-side secrets, and headers must be tested after deployment; do not assume parity with the managed project runtime. | Production project configuration, environment-scope/role record, proxy/header behavior, connected database/storage evidence, log retention/access controls, and incident-alert evidence. | No Vercel security control is verified by this audit until environment-specific evidence is supplied. |
+| Netlify | The deployment model must be checked for compatibility with the Express/full-stack application and any server functions; do not assume a static-site deployment is sufficient. | Production site/function configuration, environment-scope/role record, proxy/header behavior, connected database/storage evidence, log retention/access controls, and incident-alert evidence. | No Netlify security control is verified by this audit until environment-specific evidence is supplied. |
+
+The deployment owner should attach the evidence to the release record, date it, name the environment, and re-review it after material changes to hosting, database, storage, observability, identity, or network configuration. Frontend and application-code development may continue, but the project must not be presented as fully deployment-security-verified until this matrix is closed.
