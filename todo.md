@@ -33,6 +33,8 @@
 - [ ] Verify deployed TLS redirect, proxy trust, HSTS, database encryption, backup encryption, key management, least privilege, and central security logging before launch. (Requires deployment-owner evidence.)
 - [x] Publish a separated, platform-neutral deployment-verification matrix covering encryption at rest, encrypted backups, secret/key management, least privilege, trusted proxy headers, and central logging without claiming any are verified.
 - [x] Add Vercel, Netlify, and built-in-hosting handoff guidance that identifies the responsible platform/owner and the evidence required before a production security claim.
+- [x] Create a credential-safe Vercel/Netlify deployment handoff for a dedicated least-privilege application database account and separate migration account; do not expose or change live connection values.
+- [x] Document Vercel and Netlify compatibility checks for the Express/tRPC full-stack runtime, server-side secrets, database reachability, public form proof verification, and headers before deployment.
 
 # TRYCAT Originality and Motion Review
 
