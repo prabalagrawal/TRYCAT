@@ -78,7 +78,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
           <a href="#insights">Insights</a>
           <a href="#about">About</a>
         </nav>
-        <a className="header-cta" href="mailto:hello@trycat.com?subject=Book a Call with TRYCAT">
+        <a className="header-cta" href="/contact">
           Book a call <ArrowUpRight size={15} strokeWidth={2.2} />
         </a>
         <button className="menu-button" type="button" onClick={onMenu} aria-label="Open navigation">
@@ -115,7 +115,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           </a>
         ))}
       </div>
-      <a className="mobile-menu-cta" href="mailto:hello@trycat.com?subject=Book a Call with TRYCAT" onClick={onClose}>
+      <a className="mobile-menu-cta" href="/contact" onClick={onClose}>
         Book a call <ArrowRight size={17} />
       </a>
     </div>
@@ -226,7 +226,7 @@ export default function Home() {
               <p className="hero-lede">Understand the real problem.<br />Make the right decisions.<br />Drive meaningful transformation.</p>
               <p className="hero-description">TRYCAT helps organisations understand complex problems through <strong>Business, Human, and System</strong> perspectives — then turn insight into a clear direction.</p>
               <div className="hero-actions">
-                <a className="button button-primary" href="mailto:hello@trycat.com?subject=Book a Call with TRYCAT">Book a call <ArrowUpRight size={17} /></a>
+                <a className="button button-primary" href="/contact">Book a call <ArrowUpRight size={17} /></a>
                 <button className="text-link" type="button" onClick={() => scrollToId("methodology")}>Explore the methodology <ArrowRight size={16} /></button>
               </div>
               <div className="hero-footnote"><span>TRYCAT™ / 2026</span><span>THREE PERSPECTIVES. ONE CLEAR DIRECTION.</span></div>
@@ -272,7 +272,7 @@ export default function Home() {
                 <div className="problem-detail-top"><span className="problem-detail-index">0{selectedProblem + 1}</span><span className="problem-pulse"><CircleDot size={10} /> PATTERN DETECTED</span></div>
                 <h3>{problemItems[selectedProblem].title}</h3>
                 <p>{problemItems[selectedProblem].copy}</p>
-                <a className="text-link" href="mailto:hello@trycat.com?subject=Explore a TRYCAT problem">Explore this problem <ArrowUpRight size={15} /></a>
+                <a className="text-link" href="/contact">Explore this problem <ArrowUpRight size={15} /></a>
               </div>
             </div>
           </div>
@@ -280,7 +280,7 @@ export default function Home() {
 
         <section id="work" className="work-section section-peach">
           <div className="work-structure" aria-hidden="true"><span /><span /><span /><i /></div>
-          <div className="page-width work-inner"><SectionRail number="04" label="THE WORK" /><div className="work-copy"><p className="eyebrow">Not a case study library</p><h2>Real work begins<br /><span>before the brief.</span></h2><p>TRYCAT is brought in when a team needs a different way to look: at the start of a transformation, in the middle of a strategic tension, or before a choice becomes expensive to reverse.</p><a className="button button-dark" href="mailto:hello@trycat.com?subject=Talk about TRYCAT work">Talk about the work <ArrowUpRight size={17} /></a></div><div className="work-index"><span>FIELD NOTE / 04</span><span className="work-index-line" /><span>OBSERVE → ORIENT → MOVE</span></div></div>
+          <div className="page-width work-inner"><SectionRail number="04" label="THE WORK" /><div className="work-copy"><p className="eyebrow">Not a case study library</p><h2>Real work begins<br /><span>before the brief.</span></h2><p>TRYCAT is brought in when a team needs a different way to look: at the start of a transformation, in the middle of a strategic tension, or before a choice becomes expensive to reverse.</p><a className="button button-dark" href="/contact">Talk about the work <ArrowUpRight size={17} /></a></div><div className="work-index"><span>FIELD NOTE / 04</span><span className="work-index-line" /><span>OBSERVE → ORIENT → MOVE</span></div></div>
         </section>
 
         <section id="insights" className="insights-section section-light">
@@ -289,11 +289,11 @@ export default function Home() {
 
         <section id="about" className="about-section section-indigo"><div className="page-width about-inner"><SectionRail number="06" label="THE STUDIO" dark /><div className="about-copy"><p className="eyebrow eyebrow-light">Business intelligence / Design practice</p><h2>See the whole.<br /><span>Move with intent.</span></h2><p>TRYCAT is a methodology and a way of working for the moments that ask more of a team than an answer. We connect analysis, systems thinking, and human understanding to make the next move clearer.</p><a className="text-link text-link-light" href="mailto:hello@trycat.com?subject=Meet TRYCAT">Meet TRYCAT <ArrowUpRight size={16} /></a></div><div className="about-mark"><img src={SYMBOL_ARTWORK} alt="" /><span>TRYCAT™<br />SEE THE WHOLE.</span></div></div></section>
 
-        <section className="contact-section section-light"><div className="page-width contact-inner"><div><p className="eyebrow">Start with the messy version</p><h2>Bring the problem.<br /><span>We’ll map the whole.</span></h2></div><div className="contact-action"><p>Tell us where the system feels stuck. We’ll start there — not with a pre-packaged answer.</p><a className="button button-primary" href="mailto:hello@trycat.com?subject=Book a Call with TRYCAT">Book a call <ArrowUpRight size={17} /></a></div></div></section>
+        <section className="contact-section section-light"><div className="page-width contact-inner"><div><p className="eyebrow">Start with the messy version</p><h2>Bring the problem.<br /><span>We’ll map the whole.</span></h2></div><div className="contact-action"><p>Tell us where the system feels stuck. We’ll start there — not with a pre-packaged answer.</p><a className="button button-primary" href="/contact">Book a call <ArrowUpRight size={17} /></a></div></div></section>
       </main>
 
-      <footer className="site-footer"><div className="page-width footer-inner"><div className="footer-top"><div className="footer-brand"><span className="footer-wordmark">TRYCAT<span>™</span></span><p>Business Problem-Solving<br />& Transformation Methodology</p></div><div className="footer-tagline">SEE THE<br /><em>WHOLE.</em></div></div><div className="footer-bottom"><span>© TRYCAT 2026</span><span>BUSINESS / HUMAN / SYSTEM</span><a href="mailto:hello@trycat.com">hello@trycat.com <ArrowUpRight size={14} /></a></div></div></footer>
-      <button className="floating-cta" type="button" onClick={() => window.location.href = "mailto:hello@trycat.com?subject=Book a Call with TRYCAT"}><Plus size={17} /> <span>Book a call</span></button>
+      <footer className="site-footer"><div className="page-width footer-inner"><div className="footer-top"><div className="footer-brand"><span className="footer-wordmark">TRYCAT<span>™</span></span><p>Business Problem-Solving<br />& Transformation Methodology</p></div><div className="footer-tagline">SEE THE<br /><em>WHOLE.</em></div></div><div className="footer-bottom"><span>© TRYCAT 2026</span><span>BUSINESS / HUMAN / SYSTEM</span><span className="footer-privacy-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/rights">Data rights</a></span><a href="mailto:hello@trycat.com">Privacy & grievance: hello@trycat.com <ArrowUpRight size={14} /></a></div></div></footer>
+      <button className="floating-cta" type="button" onClick={() => window.location.href = "/contact"}><Plus size={17} /> <span>Book a call</span></button>
     </div>
   );
 }
